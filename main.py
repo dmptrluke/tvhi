@@ -28,9 +28,9 @@ tag = requests.get(TVH_URL + '/api/channeltag/list')
 tag.raise_for_status()
 
 hd_tag = ""
-for entry in tag.json()['entries']:
-    if entry['val'] == "HDTV":
-        hd_tag = entry['key']
+for tag in tag.json()['entries']:
+    if tag['val'] == "HDTV":
+        hd_tag = tag['key']
 
 
 def truncate(content, length=150, suffix='...'):
@@ -142,4 +142,43 @@ def api_lineup():
 def api_post():
     return ""
 
-app.run(port=5004, host='0.0.0.0')
+
+####
+# PROXY
+####
+
+@app.route('/auto/<channel>')
+def api_stream(channel):
+    app.logger.info("Received stream request: {}".format(flask.request.url))
+    channel = channel.replace('v', '')
+    duration = flask.request.args.get('duration', default=0, type=int)
+
+    if not duration == 0:
+        duration += time()
+
+    request = requests.get(TVH_URL + '/api/channel/grid')
+    request.raise_for_status()
+
+    json = request.json()
+
+    url = None
+    for entry in json['entries']:
+        if str(entry['number']) == channel:
+            url = STREAM_URL.format(entry['uuid'], 'pass', STREAM_WEIGHT)
+
+    if not url:
+        flask.abort(404)
+    else:
+        req = requests.get(url, stream=True)
+
+        def generate():
+            yield b''
+            for chunk in req.iter_content(chunk_size=1024*1024):
+                if not duration == 0 and not time() < duration:
+                    req.close()
+                    break
+                yield chunk
+
+        return Response(generate(), content_type=req.headers['content-type'], direct_passthrough=True)
+
+app.run(port=5004, host='0.0.0.0', threaded=True)
