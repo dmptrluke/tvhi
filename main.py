@@ -33,7 +33,7 @@ for tag in tag.json()['entries']:
     if tag['val'] == "HDTV":
         hd_tags.append(tag['key'])
     if "radio" in tag['val'].lower():
-        radio_tags.append(['key'])
+        radio_tags.append(tag['key'])
 
 
 def truncate(content, length=150, suffix='...'):
@@ -64,6 +64,11 @@ def listing():
     channels = {}
 
     for entry in json['entries']:
+
+        # skip radio stations
+        if any(i in entry['tags'] for i in radio_tags):
+            continue
+
         if entry['channelUuid'] in channels:
             continue
 
@@ -132,24 +137,15 @@ def api_lineup():
     lineup = []
     for entry in grid.json()['entries']:
 
-        is_radio = False
-        is_hd = False
-
-        for _tag in entry['tags']:
-            if _tag in radio_tags:
-                is_radio = True
-            elif _tag in hd_tags:
-                is_hd = True
-
         # skip radio stations
-        if is_radio:
+        if any(i in entry['tags'] for i in radio_tags):
             continue
 
         lineup.append({
             "GuideNumber": str(entry['number']),
             "GuideName": entry['name'],
             "URL": STREAM_URL.format(entry['uuid'], STREAM_PROFILE, STREAM_WEIGHT),
-            "HD": 1 if is_hd else 0
+            "HD": 1 if any(i in entry['tags'] for i in hd_tags) else 0
         })
 
     return jsonify(lineup)
@@ -180,6 +176,11 @@ def api_stream(channel):
 
     url = None
     for entry in json['entries']:
+
+        # skip radio stations
+        if any(i in entry['tags'] for i in radio_tags):
+            continue
+
         if str(entry['number']) == channel:
             url = STREAM_URL.format(entry['uuid'], 'pass', STREAM_WEIGHT)
 
