@@ -27,10 +27,13 @@ app = Flask(__name__)
 tag = requests.get(TVH_URL + '/api/channeltag/list')
 tag.raise_for_status()
 
-hd_tag = ""
+hd_tags = []
+radio_tags = []
 for tag in tag.json()['entries']:
     if tag['val'] == "HDTV":
-        hd_tag = tag['key']
+        hd_tags.append(tag['key'])
+    if "radio" in tag['val'].lower():
+        radio_tags.append(['key'])
 
 
 def truncate(content, length=150, suffix='...'):
@@ -54,7 +57,7 @@ def truncate(content, length=150, suffix='...'):
 
 @app.route("/")
 def listing():
-    request = requests.get(TVH_URL + '/api/epg/events/grid?limit=100')
+    request = requests.get(TVH_URL + '/api/epg/events/grid?limit=200')
     request.raise_for_status()
 
     json = request.json()
@@ -123,16 +126,30 @@ def api_status():
 
 @app.route('/lineup.json')
 def api_lineup():
-    grid = requests.get(TVH_URL + '/api/channel/grid')
+    grid = requests.get(TVH_URL + '/api/channel/grid?limit=200')
     grid.raise_for_status()
 
     lineup = []
     for entry in grid.json()['entries']:
+
+        is_radio = False
+        is_hd = False
+
+        for _tag in entry['tags']:
+            if _tag in radio_tags:
+                is_radio = True
+            elif _tag in hd_tags:
+                is_hd = True
+
+        # skip radio stations
+        if is_radio:
+            continue
+
         lineup.append({
             "GuideNumber": str(entry['number']),
             "GuideName": entry['name'],
             "URL": STREAM_URL.format(entry['uuid'], STREAM_PROFILE, STREAM_WEIGHT),
-            "HD": 1 if hd_tag in entry['tags'] else 0
+            "HD": 1 if is_hd else 0
         })
 
     return jsonify(lineup)
