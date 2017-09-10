@@ -148,6 +148,9 @@ def api_lineup():
             "HD": 1 if any(i in entry['tags'] for i in hd_tags) else 0
         })
 
+    # this does nothing useful, just makes the output look cool
+    lineup.sort(key=lambda x: int(x['GuideNumber']))
+
     return jsonify(lineup)
 
 
