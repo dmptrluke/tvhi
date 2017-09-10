@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+{% for channel in channels %}
+  <p>
+      <a href="/watch/{{ channel.uuid }}/">{{ channel.name }}</a> - {{ channel.title }}
+      <br>
+      {{ channel.description if channel.description else "No Description" }}
+  </p>
+{% endfor %}
+{% endblock %}
