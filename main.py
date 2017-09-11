@@ -72,9 +72,14 @@ def listing():
         if entry['channelUuid'] in channels:
             continue
 
+        if entry['channelIcon'].startswith("http"):
+            icon = entry['channelIcon']
+        else:
+            icon = TVH_URL + entry['channelIcon'] + '.png'
+
         channels[entry['channelUuid']] = {
             "name": entry['channelName'],
-            "icon": TVH_URL + entry['channelIcon'] + '.png',
+            "icon": icon,
             "uuid": entry['channelUuid'],
             "title": entry['title'],
             "description": truncate(entry.get('subtitle') or entry.get('summary'))
@@ -107,7 +112,7 @@ def watch(uuid):
 @app.route('/discover.json')
 def api_discover():
     return jsonify({
-        'FriendlyName': 'HDHomeRun CONNECT',
+        'FriendlyName': 'HDHomeRun Tvheadend Proxy',
         'ModelNumber': 'HDHR4-2DT',
         'FirmwareName': 'hdhomerun4_dvbt',
         'TunerCount': TUNER_COUNT,
@@ -144,6 +149,7 @@ def api_lineup():
         lineup.append({
             "GuideNumber": str(entry['number']),
             "GuideName": entry['name'],
+            #"URL": ME + "/auto/v" + str(entry['number']),
             "URL": STREAM_URL.format(entry['uuid'], STREAM_PROFILE, STREAM_WEIGHT),
             "HD": 1 if any(i in entry['tags'] for i in hd_tags) else 0
         })
