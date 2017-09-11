@@ -10,6 +10,7 @@ config.read('config.ini')
 
 
 ME = config.get('tvhi', 'tvhi_url').rstrip('/')
+DEBUG_MODE = config.getboolean('tvhi', 'debug', fallback=False)
 DEVICE_ID = config.get('tvhi', 'device_id', fallback='tvhituner2')
 
 TVH_URL = config.get('tvh', 'tvh_url').rstrip('/')
@@ -208,4 +209,4 @@ def api_stream(channel):
 
         return Response(generate(), content_type=req.headers['content-type'], direct_passthrough=True)
 
-app.run(port=5004, host='0.0.0.0', threaded=True, debug=True)
+app.run(port=5004, host='0.0.0.0', threaded=True, debug=DEBUG_MODE)
