@@ -208,4 +208,4 @@ def api_stream(channel):
 
         return Response(generate(), content_type=req.headers['content-type'], direct_passthrough=True)
 
-app.run(port=5004, host='0.0.0.0', threaded=True)
+app.run(port=5004, host='0.0.0.0', threaded=True, debug=True)
